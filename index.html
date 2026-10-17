@@ -51,7 +51,7 @@ summary{font-weight:800;cursor:pointer;min-height:32px}
 <body>
 <div id="app"></div>
 <script>
-const LET=true;const VER="2.1";
+const LET=true;const VER="2.3";
 const RN=[["درب الحيوانات","🐾"],["نهر الكلمات","🌊"],["معبد الكنز","🏛️"]];
 const EA="🐱 🐶 🦁 🐵 🐘 🐰 🐟 🐦".split(" "),EF="🍎 🍌 🍇 🍋 🍊 🍓 🍉 🍒".split(" "),AA="قطة كلب أسد قرد فيل أرنب سمكة طائر".split(" "),AF="تفاحة موزة عنب ليمون برتقالة فراولة بطيخ كرز".split(" ");
 const sp=x=>x.split(" "),mk=(w,p,A,E)=>sp(w).map((x,i)=>[x,A[i],E[i],sp(p)[i]]);
@@ -63,12 +63,19 @@ const LG={en:{n:"English",f:"🇬🇧",v:"en-US"},fr:{n:"Français",f:"🇫🇷"
 let R,W;
 function setL(l){S.l=l;R=RN.map((r,i)=>({n:r[0],e:r[1],w:i<2?DATA[l][i]:null}));W=[...R[0].w,...R[1].w]}
 const $=document.getElementById("app");
-let S={w:{},q:0,d:"",dq:0,mute:false,intro:false};
-try{Object.assign(S,JSON.parse(localStorage.getItem("jl2")||"{}"))}catch(e){}
+function load(){let o={};try{o=JSON.parse(localStorage.getItem("jl2")||"{}")}catch(e){}
+ if(!o||typeof o!=="object"||Array.isArray(o))o={};
+ const n=(v,mx=1e9)=>Number.isFinite(v)?Math.max(0,Math.min(mx,Math.floor(v))):0,w={};
+ if(o.w&&typeof o.w==="object")Object.keys(o.w).forEach(k=>{const x=o.w[k];if(!/^(en|fr|es):.{1,30}$/.test(k)||!x||typeof x!=="object")return;w[k]={b:n(x.b,4),c:n(x.c),x:n(x.x!==undefined?x.x:x.m),t:n(x.t,4e12),lt:["pw","lp","sp"].includes(x.lt)?x.lt:""}});
+ return{w,q:n(o.q),d:typeof o.d==="string"?o.d.slice(0,10):"",dq:n(o.dq,1000),lv:n(o.lv),mute:o.mute===true,intro:o.intro===true,l:["en","fr","es"].includes(o.l)?o.l:undefined}}
+let S=load();
 const save=()=>{try{localStorage.setItem("jl2",JSON.stringify(S))}catch(e){}};
 const today=()=>new Date().toISOString().slice(0,10);
 const K=w=>S.l+":"+w[0];const bx=w=>(S.w[K(w)]||{}).b||0;
 const cnt=(ws,m)=>ws.filter(w=>bx(w)>=m).length;
+const att=w=>{const r=S.w[K(w)];return r?r.c+r.x:0};
+const state=w=>bx(w)>=3?"m":att(w)>0?"l":"n";
+const needsRev=w=>{const r=S.w[K(w)];return !!r&&((state(w)==="l"&&r.x>0)||(state(w)==="m"&&r.t>0&&Date.now()-r.t>3*864e5))};
 const open=[()=>true,()=>cnt(R[0].w,2)>=4,()=>cnt(W,3)>=8];
 const need=["","لفتح النهر: اجعل 4 حيوانات في مستوى «أتعلّمها» 🌳","لفتح المعبد: أتقن 8 كلمات ⭐"];
 const sh=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -89,7 +96,7 @@ const msgs=["مرحبًا يا مستكشف! أنا كيكي 🐵 هيا نتع�
 let Q=null;
 
 function info(){return `<details open><summary>للأهل والمعلّمين</summary>يعلّم الأطفال (6–10 سنوات) كلمات مبتدئة (إنجليزية أو فرنسية أو إسبانية حسب اختيارهم) بالصور والاستماع والتهجئة، وتُعاد الكلمات الصعبة لاحقًا بتمرين مختلف. التعليمات والمعاني بالعربية، والكلمات باللغة المختارة.<br>يُحفظ التقدّم على هذا الجهاز فقط (لا يتزامن بين الأجهزة). لا حسابات ولا إعلانات ولا تتبّع، ولا نطلب أي بيانات شخصية.</details>`}
-function langScreen(){Q=null;h(`<div class="top"><b style="flex:1;font-size:1.2rem">🧒🐵 <span class="en">Jungle Letters</span></b>${muteBtn()}</div><h1>ماذا تريد أن تتعلّم اليوم؟</h1><p class="sub">اختر لغة المغامرة</p>${Object.keys(LG).map(k=>`<button class="btn ${k===S.l?"o":""}" data-a="lang" data-v="${k}"><span aria-hidden="true">${LG[k].f}</span> <span class="en">${LG[k].n}</span></button>`).join("")}<p class="sub">الكلمات بلغتك المختارة والشرح بالعربية. يُحفظ تقدّم كل لغة على حدة.</p>`)}
+function langScreen(){Q=null;h(`<div class="top"><b style="flex:1;font-size:1.2rem">🧒🐵 <span class="en">Jungle Letters</span></b>${muteBtn()}</div><h1>ماذا تريد أن تتعلّم اليوم؟</h1><p class="sub">اختر لغة المغامرة</p>${Object.keys(LG).map(k=>`<button class="btn ${k===S.l?"o":""}" data-a="lang" data-v="${k}"><span aria-hidden="true">${LG[k].f}</span> <span class="en">${LG[k].n}</span></button>`).join("")}<p class="sub">الكلمات بلغتك المختارة والشرح بالعربية. يُحفظ تقدّم كل لغة على حدة.</p><button class="btn s" data-a="upd" style="width:100%">🔄 تحديث اللعبة</button><p class="sub" id="toast"></p><p class="sub">الإصدار ${VER}</p>`)}
 function intro(){h(`<div class="top"><button class="btn s" data-a="langs" aria-label="رجوع لاختيار اللغة">↩</button></div><h1>🌴 Jungle Letters<br><small>الغابة الناطقة</small></h1><p class="sub">Learn a language. Unlock the Jungle!</p>
 <div class="kiki"><span class="av" aria-hidden="true">🧒🐵</span><p>أنت مستكشف صغير، وكيكي القرد يرافقك. تعلّم الكلمات لتفتح أبواب الغابة واحدًا تلو الآخر!</p></div>${info()}
 <button class="btn o" data-a="start">ابدأ المغامرة ▶</button>`)}
@@ -100,22 +107,30 @@ function home(){
  <div class="kiki"><span class="av" aria-hidden="true">🐵</span><p>${msgs[S.q%3]}</p></div>
  <div class="kiki" style="display:block"><b>🎯 مهمة اليوم: أجب عن 10 أسئلة ${p>=10?"— أنجزتها! 🏅":""}</b><div class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemax="10"><i style="width:${p*10}%"></i></div></div>
  ${R.map((r,i)=>{const o=open[i]();return `<button class="reg" data-a="play" data-v="${i}" aria-disabled="${!o}"><span class="ic" aria-hidden="true">${o?r.e:"🔒"}</span><span><b>${r.n}</b><small>${o?(i===2?"مراجعة كل الكلمات":"8 كلمات: "+cnt(r.w,3)+" متقنة"):need[i]}</small></span></button>`}).join("")}
- <button class="btn o" data-a="map">🗺️ خريطة إتقان الكلمات (${mast}/${W.length} ⭐)</button>
+ <button class="btn o" data-a="map">📈 تقدّمي ومراجعة الكلمات (${mast}/${W.length} ⭐)</button>
  ${LET?'<a class="btn s" style="text-align:center;text-decoration:none;display:block" href="letters.html">🔤 لعبة الحروف (النسخة الأولى)</a>':""}
  <div style="display:flex;gap:8px"><button class="btn s" data-a="share" style="flex:1">📤 شارك اللعبة</button><button class="btn s" data-a="info" style="flex:1">ℹ️ للأهل</button></div><div style="display:flex;gap:8px"><button class="btn s" data-a="test" style="flex:1">🔈 اختبار الصوت</button><button class="btn s" data-a="upd" style="flex:1">🔄 تحديث اللعبة</button></div><p class="sub" id="toast"></p><p class="sub">الإصدار ${VER}</p>`)}
 function map(){
- h(`<div class="top"><button class="btn s" data-a="home" aria-label="رجوع">↩</button><b>🗺️ خريطة الإتقان</b></div><p class="sub">🌱 جديدة · 🌿 تنمو · 🌳 أتعلّمها · ⭐ متقنة</p>
- <div class="map">${W.map(w=>{const b=bx(w);return `<div class="cell ${b>=3?"m":""}"><span aria-hidden="true">${w[2]}</span><b class="en">${w[0]}</b><br>${["🌱","🌿","🌳","⭐","⭐"][b]}</div>`}).join("")}</div>`)}
+ const n=W.filter(w=>state(w)==="n").length,l=W.filter(w=>state(w)==="l").length,m=W.filter(w=>state(w)==="m").length,rv=W.filter(needsRev).length;
+ const pr=Math.round(W.reduce((a,w)=>a+Math.min(bx(w),3),0)/(W.length*3)*100);
+ h(`<div class="top"><button class="btn s" data-a="home" aria-label="رجوع">↩</button><b>📈 تقدّمي</b></div>
+ <div class="kiki" style="display:block"><b>التقدّم الكلي: ${pr}%</b><div class="bar" role="progressbar" aria-valuenow="${pr}" aria-valuemax="100"><i style="width:${pr}%"></i></div><p>🌱 جديدة: ${n} · 🌿 قيد التعلّم: ${l} · ⭐ متقنة: ${m}<br>🔁 تحتاج مراجعة: ${rv} · 🍃 أوراقك: ${S.lv}</p></div>
+ ${rv?`<button class="btn o" data-a="play" data-v="r">🔁 راجع الكلمات الصعبة (${rv})</button>`:""}
+ <div class="map">${W.map(w=>{const s=state(w),rr=S.w[K(w)]||{c:0,x:0};return `<div class="cell ${s==="m"?"m":""}"><span aria-hidden="true">${w[2]}</span><b class="en">${w[0]}</b><br>${{n:"🌱",l:"🌿",m:"⭐"}[s]}${needsRev(w)?" 🔁":""}<br><small>✔${rr.c} ✖${rr.x}</small></div>`}).join("")}</div>`)}
 function pick(ri){
  const pool=ri===2?W:R[ri].w;
- return pool.map(w=>({w,p:bx(w)+Math.random()*1.5-((S.w[K(w)]||{}).m||0)*.3})).sort((a,b)=>a.p-b.p).slice(0,8).map(x=>x.w)}
-function play(ri){ri=+ri;if(!open[ri]()){toast(need[ri]);return}Q={ri,L:sh(pick(ri)),i:0,ok:0,imp:0,seen:{},c:null};nextQ()}
+ return pool.map(w=>({w,p:bx(w)+Math.random()*1.5-((S.w[K(w)]||{}).x||0)*.3-(needsRev(w)?1.5:0)})).sort((a,b)=>a.p-b.p).slice(0,8).map(x=>x.w)}
+function play(ri){
+ if(ri==="r"){const L=sh(W.filter(needsRev)).slice(0,8);if(!L.length)return;Q={ri:2,rev:1,L,i:0,ok:0,imp:0,seen:{},req:{},c:null};return nextQ()}
+ ri=+ri;if(!open[ri]()){toast(need[ri]);return}Q={ri,L:sh(pick(ri)),i:0,ok:0,imp:0,seen:{},req:{},c:null};nextQ()}
 function nextQ(){if(Q.i>=Q.L.length)return end();const w=Q.L[Q.i];if(bx(w)===0&&!Q.seen[w[0]]){Q.seen[w[0]]=1;return card(w)}ask(w)}
 function head(){return `<div class="top"><button class="btn s" data-a="quit" aria-label="خروج إلى الرئيسية">↩</button><button class="btn s" data-a="pause" aria-label="إيقاف مؤقت">⏸</button><div class="bar" role="progressbar" aria-valuenow="${Q.i}" aria-valuemax="${Q.L.length}"><i style="width:${Q.i/Q.L.length*100}%"></i></div><span class="stat">${Q.i+1}/${Q.L.length}</span></div>`}
 function card(w){Q.c={w,card:1};h(head()+`<p class="sub">كلمة جديدة! 🌱</p><div class="q" aria-hidden="true">${w[2]}</div><h1 class="en" style="display:block">${w[0]}</h1><p class="sub">${w[1]} · 🗣️ النطق: ${w[3]}</p><p class="sub en" style="display:block;direction:ltr">${ex(w)}</p><button class="btn o" data-a="say" data-v="${w[0]}">🔊 استمع</button><button class="btn" data-a="go">فهمت ▶</button>`);setTimeout(()=>say(w[0]),300)}
 function ask(w){
  const b=bx(w),short=w[0].length<=6,pool=Q.ri===2?W:R[Q.ri].w;
- const t=b<=0?"pw":b===1?(CAN()?"lp":"pw"):b===2?(short?"sp":CAN()?"lp":"pw"):(short&&Math.random()<.6?"sp":CAN()?"lp":"pw");
+ const r0=S.w[K(w)]||{};let T=b<=0?["pw"]:b===1?["lp","pw"]:["sp","lp","pw"];
+ T=T.filter(x=>(x!=="lp"||CAN())&&(x!=="sp"||short));if(!T.length)T=["pw"];
+ const alt=T.filter(x=>x!==r0.lt),P=alt.length?alt:T,t=b>=3?P[Math.random()*P.length|0]:P[0];
  const opts=sh([w,...sh(pool.filter(x=>x!==w)).slice(0,2)]);
  Q.c={w,t,opts,mis:0,pos:0,done:false};
  let body;
@@ -124,17 +139,20 @@ function ask(w){
  else body=`<p class="sub">رتّب الحروف لتكتب الكلمة</p><div class="q" aria-hidden="true">${w[2]}</div><div class="slots" id="sl">${[...w[0]].map(()=>"<b>&nbsp;</b>").join("")}</div><div class="opts">${sh([...w[0]].map((c,i)=>i)).map(i=>`<button class="opt en" data-a="tile" data-v="${i}">${w[0][i]}</button>`).join("")}</div>`;
  h(head()+body+`<div id="fb"></div>`);if(t==="lp")setTimeout(()=>say(w[0]),300)}
 function fin(ok){
- const c=Q.c,w=c.w,r=S.w[K(w)]=S.w[K(w)]||{b:0,m:0},old=r.b;c.done=true;
- if(ok){r.b=Math.min(4,r.b+1);Q.ok++;if(r.b>old)Q.imp++;good()}else{r.b=Math.max(0,r.b-1);r.m++;bad()}
+ const c=Q.c,w=c.w,k=K(w),r=S.w[k]=S.w[k]||{b:0,c:0,x:0,t:0,lt:""},old=r.b;c.done=true;r.t=Date.now();
+ let rw="",hint="";
+ if(ok){r.c++;r.lt="";r.b=Math.min(4,r.b+1);Q.ok++;if(r.b>old)Q.imp++;S.lv++;rw="+1 🍃";if(old<3&&r.b>=3){S.lv+=5;rw="🎉 كلمة متقنة جديدة! +6 🍃"}good()}
+ else{r.x++;r.lt=c.t;r.b=Math.max(0,r.b-1);bad();hint=`💡 تلميح: تبدأ بحرف «${[...w[0]][0].toUpperCase()}» وفيها ${[...w[0]].length} حروف · 🗣️ ${w[3]}<br>سنعيد الكلمة بعد قليل بتمرين مختلف.<br>`;
+  if(!Q.req[k]){Q.req[k]=1;Q.L.splice(Math.min(Q.i+4,Q.L.length),0,w)}}
  if(S.d!==today()){S.d=today();S.dq=0}S.q++;S.dq++;save();
- document.getElementById("fb").innerHTML=`<div class="fb ${ok?"good":"bad"}"><b>${ok?"🐵 رائع! أحسنت!":"🐵 قريب جدًا، لا بأس! سنعيدها لاحقًا."}</b><br><span class="en">${w[0]}</span> = ${w[1]} · 🗣️ ${w[3]}<br><span class="en">${ex(w)}</span></div><button class="btn" data-a="next">التالي ▶</button>`;
+ document.getElementById("fb").innerHTML=`<div class="fb ${ok?"good":"bad"}"><b>${ok?"🐵 رائع! أحسنت! "+rw:"🐵 لا بأس، المحاولة تعلّم!"}</b><br>${hint}<span class="en">${w[0]}</span> = ${w[1]} · 🗣️ ${w[3]}<br><span class="en">${ex(w)}</span></div><button class="btn" data-a="next">التالي ▶</button>`;
  document.querySelectorAll(".opt").forEach(b=>b.disabled=true);setTimeout(()=>say(w[0]),400)}
 function end(){
  const acc=Q.ok/Q.L.length,st=acc>=.85?3:acc>=.6?2:1,mast=cnt(W,3);
  const nu=open.map((f,i)=>i>0&&f()?R[i].n:"").filter(Boolean);
  h(`<div class="top"><button class="btn s" data-a="home" aria-label="رجوع إلى الرئيسية">↩</button></div><h1>🎉 أحسنت يا مستكشف!</h1><div class="stars" aria-label="${st} نجوم">${"⭐".repeat(st)}</div><p class="sub">إجابات صحيحة: ${Q.ok}/${Q.L.length} · كلمات تحسّنت: ${Q.imp}<br>كلمات متقنة: ${mast}/${W.length}</p>
  <div class="kiki"><span class="av" aria-hidden="true">🐵</span><p>${acc>=.85?"أنت بطل الغابة!":"كل مرة تتحسّن أكثر. سأذكّرك بالكلمات الصعبة لاحقًا."}${nu.length?"<br>🔓 المناطق المفتوحة: "+nu.join("، "):""}</p></div>
- <button class="btn" data-a="play" data-v="${Q.ri}">العب مرة أخرى</button><button class="btn s" data-a="share" style="width:100%">📤 شارك إنجازك</button><button class="btn o" data-a="home">الرئيسية</button><p class="sub" id="toast"></p>`);Q=null}
+ <button class="btn" data-a="play" data-v="${Q.rev?"r":Q.ri}">العب مرة أخرى</button><button class="btn s" data-a="share" style="width:100%">📤 شارك إنجازك</button><button class="btn o" data-a="home">الرئيسية</button><p class="sub" id="toast"></p>`);Q=null}
 function toast(t){const e=document.getElementById("toast");if(e)e.textContent=t}
 async function share(){
  const n=cnt(W,3),url=location.href.split("#")[0],tx=`I learned ${n} English words in Jungle Letters! 🌴 تعلّم الإنجليزية مع غابة الحروف`;
