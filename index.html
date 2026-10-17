@@ -51,7 +51,7 @@ summary{font-weight:800;cursor:pointer;min-height:32px}
 <body>
 <div id="app"></div>
 <script>
-const LET=true;
+const LET=true;const VER="2.1";
 const RN=[["درب الحيوانات","🐾"],["نهر الكلمات","🌊"],["معبد الكنز","🏛️"]];
 const EA="🐱 🐶 🦁 🐵 🐘 🐰 🐟 🐦".split(" "),EF="🍎 🍌 🍇 🍋 🍊 🍓 🍉 🍒".split(" "),AA="قطة كلب أسد قرد فيل أرنب سمكة طائر".split(" "),AF="تفاحة موزة عنب ليمون برتقالة فراولة بطيخ كرز".split(" ");
 const sp=x=>x.split(" "),mk=(w,p,A,E)=>sp(w).map((x,i)=>[x,A[i],E[i],sp(p)[i]]);
@@ -102,7 +102,7 @@ function home(){
  ${R.map((r,i)=>{const o=open[i]();return `<button class="reg" data-a="play" data-v="${i}" aria-disabled="${!o}"><span class="ic" aria-hidden="true">${o?r.e:"🔒"}</span><span><b>${r.n}</b><small>${o?(i===2?"مراجعة كل الكلمات":"8 كلمات: "+cnt(r.w,3)+" متقنة"):need[i]}</small></span></button>`}).join("")}
  <button class="btn o" data-a="map">🗺️ خريطة إتقان الكلمات (${mast}/${W.length} ⭐)</button>
  ${LET?'<a class="btn s" style="text-align:center;text-decoration:none;display:block" href="letters.html">🔤 لعبة الحروف (النسخة الأولى)</a>':""}
- <div style="display:flex;gap:8px"><button class="btn s" data-a="share" style="flex:1">📤 شارك اللعبة</button><button class="btn s" data-a="info" style="flex:1">ℹ️ للأهل</button></div><button class="btn s" data-a="test" style="width:100%">🔈 اختبار الصوت</button><p class="sub" id="toast"></p>`)}
+ <div style="display:flex;gap:8px"><button class="btn s" data-a="share" style="flex:1">📤 شارك اللعبة</button><button class="btn s" data-a="info" style="flex:1">ℹ️ للأهل</button></div><div style="display:flex;gap:8px"><button class="btn s" data-a="test" style="flex:1">🔈 اختبار الصوت</button><button class="btn s" data-a="upd" style="flex:1">🔄 تحديث اللعبة</button></div><p class="sub" id="toast"></p><p class="sub">الإصدار ${VER}</p>`)}
 function map(){
  h(`<div class="top"><button class="btn s" data-a="home" aria-label="رجوع">↩</button><b>🗺️ خريطة الإتقان</b></div><p class="sub">🌱 جديدة · 🌿 تنمو · 🌳 أتعلّمها · ⭐ متقنة</p>
  <div class="map">${W.map(w=>{const b=bx(w);return `<div class="cell ${b>=3?"m":""}"><span aria-hidden="true">${w[2]}</span><b class="en">${w[0]}</b><br>${["🌱","🌿","🌳","⭐","⭐"][b]}</div>`}).join("")}</div>`)}
@@ -143,6 +143,13 @@ async function share(){
 const act={
  test(){loadV();if(S.mute){toast("الصوت مكتوم: اضغط 🔇 في الأعلى لتشغيله.");return}tone(660,.25);say(R[0].w[0][0]);
   toast(!SP?"هذا المتصفح لا يدعم نطق الكلمات. تعمل المؤثرات القصيرة فقط، ويظهر النطق مكتوبًا بالعربية 🗣️.":findV()?"إن لم تسمع الكلمة فارفع صوت الوسائط في الهاتف.":"لا يوجد في هاتفك صوت للغة المختارة. ثبّت «خدمات الكلام من Google» وحمّل صوت هذه اللغة من إعدادات تحويل النص إلى كلام. وفي الأثناء ستجد النطق مكتوبًا بالعربية 🗣️ تحت كل كلمة.")},
+ async upd(){
+  if(!navigator.onLine){toast("يلزم اتصال بالإنترنت للتحديث.");return}
+  toast("جارٍ التحديث…");
+  try{const f=await fetch(location.href.split("#")[0],{cache:"no-store"});if(!f.ok)throw 0;
+   if("serviceWorker" in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(x=>x.update()))}
+   if(window.caches){const k=await caches.keys();await Promise.all(k.map(x=>caches.delete(x)))}
+   location.reload()}catch(e){toast("تعذّر التحديث الآن. تأكد من الإنترنت وحاول مجددًا (تقدّمك محفوظ).")}},
  lang(v){setL(v);save();S.intro?home():intro()},langs:langScreen,
  start(){S.intro=true;save();home()},home,map,info(){h(`<div class="top"><button class="btn s" data-a="home" aria-label="رجوع">↩</button><b>ℹ️ للأهل والمعلّمين</b></div>${info()}`)},
  mute(){S.mute=!S.mute;save();try{speechSynthesis.cancel()}catch(e){}document.querySelectorAll("[data-a=mute]").forEach(b=>{b.textContent=S.mute?"🔇":"🔊";b.setAttribute("aria-label",S.mute?"تشغيل الصوت":"كتم الصوت")})},
