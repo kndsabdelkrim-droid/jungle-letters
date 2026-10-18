@@ -41,6 +41,7 @@ h1{font-size:2.4rem;margin:8px 0 0;text-align:center;font-weight:900}
 .bar i{display:block;height:100%;background:var(--b);transition:width .3s}
 .win{text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
 .stars{font-size:3.4rem}
+.btn.s{min-height:48px}button:focus-visible,a:focus-visible{outline:4px solid var(--a);outline-offset:2px}
 .lv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .lv button{font:inherit;font-weight:800;font-size:1.2rem;padding:14px 0;border-radius:16px;border:0;background:var(--card);color:var(--ink);box-shadow:0 4px 0 var(--shadow);cursor:pointer}
 .lv small{display:block;font-size:.8rem}
@@ -70,6 +71,23 @@ Object.keys(X).forEach(c=>Object.assign(L[c],X[c]));
 function setD(){D=save.pack==="n"?NW[save.lang].map((w,i)=>[save.lang==="ar"?String(i+1).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]):String(i+1),w,"🍎".repeat(i+1)]):T.d}
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);let dp;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;const b=document.getElementById("ins");if(b)b.style.display="block"});
+const NV={ar:{main:"اللعبة الرئيسية",mainL:"العودة إلى اللعبة الرئيسية",upd:"تحديث اللعبة",rst:"إعادة",bk:"رجوع",nooff:"يلزم اتصال بالإنترنت للتحديث.",ing:"جارٍ التحديث…",fail:"تعذّر التحديث الآن. تقدّمك محفوظ."},
+en:{main:"Main game",mainL:"Back to the main game",upd:"Update game",rst:"Restart",bk:"Back",nooff:"An internet connection is needed to update.",ing:"Updating…",fail:"Update failed. Your progress is safe."},
+fr:{main:"Jeu principal",mainL:"Retour au jeu principal",upd:"Mettre à jour",rst:"Recommencer",bk:"Retour",nooff:"Une connexion Internet est nécessaire.",ing:"Mise à jour…",fail:"Échec de la mise à jour. Ta progression est conservée."},
+es:{main:"Juego principal",mainL:"Volver al juego principal",upd:"Actualizar",rst:"Reiniciar",bk:"Atrás",nooff:"Se necesita conexión a Internet para actualizar.",ing:"Actualizando…",fail:"No se pudo actualizar. Tu progreso está a salvo."}};
+Object.keys(NV).forEach(c=>Object.assign(L[c],NV[c]));
+let tok=0;
+function toMain(){
+ try{const rf=document.referrer;if(rf&&history.length>1){const u=new URL(rf);if(u.origin===location.origin&&/\/(index\.html)?$/.test(u.pathname)){history.back();return}}}catch(e){}
+ location.replace("./index.html")}
+async function upd(){
+ const t=document.getElementById("toast"),m=x=>{if(t)t.textContent=x};
+ if(!navigator.onLine){m(T.nooff);return}
+ m(T.ing);
+ try{const f=await fetch(location.href.split("#")[0],{cache:"no-store"});if(!f.ok)throw 0;
+  if("serviceWorker" in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(x=>x.update()))}
+  if(window.caches){const k=await caches.keys();await Promise.all(k.map(x=>caches.delete(x)))}
+  location.reload()}catch(e){m(T.fail)}}
 const LV=[3,4,6,8];
 const $=document.getElementById("app");
 let save={};try{save=JSON.parse(localStorage.getItem("huroof")||"{}")}catch(e){}
@@ -84,60 +102,65 @@ const good=()=>{tone(660);setTimeout(()=>tone(880),110)},bad=()=>tone(200,.25,"s
 function say(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=T.sp;u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
 const key=k=>save.lang+(save.pack==="n"?"n":"")+k;
 function menu(){
+ tok++;
  const total=Object.entries(save).filter(([k,v])=>typeof v==="number").reduce((a,[,v])=>a+v,0);
- $.innerHTML=`<div class="langs">${Object.keys(L).map(c=>`<button class="${c===save.lang?"on":""}" data-c="${c}">${L[c].n}</button>`).join("")}</div>
+ $.innerHTML=`<div class="top"><button class="btn s" id="hm" aria-label="${T.mainL}">🏠 ${T.main}</button></div><div class="langs">${Object.keys(L).map(c=>`<button class="${c===save.lang?"on":""}" data-c="${c}">${L[c].n}</button>`).join("")}</div>
  <h1>🦁 ${T.title}</h1><p class="sub">${T.sub} · ${T.stars}: ⭐ ${total}</p>
  <div class="langs packs"><button class="${save.pack!=="n"?"on":""}" data-p="l">🔤 ${T.pl1}</button><button class="${save.pack==="n"?"on":""}" data-p="n">🔢 ${T.pl2}</button></div>
  <button class="btn" id="m">🃏 ${T.mem}</button>
  <button class="btn g" id="z">❓ ${T.qz}</button>
- <button class="btn s" id="ins" style="display:${dp||isIOS?"block":"none"};margin:0 auto">📲 ${T.inst}</button><p class="sub">${T.off}</p>`;
+ <button class="btn s" id="ins" style="display:${dp||isIOS?"block":"none"};margin:0 auto">📲 ${T.inst}</button><button class="btn s" id="up" style="width:100%">🔄 ${T.upd}</button><p class="sub">${T.off}</p><p class="sub" id="toast"></p>`;
  document.getElementById("m").onclick=levels;document.getElementById("z").onclick=quiz;
  document.querySelectorAll("button[data-c]").forEach(b=>b.onclick=()=>{setLang(b.dataset.c);menu()});
  document.querySelectorAll("button[data-p]").forEach(b=>b.onclick=()=>{save.pack=b.dataset.p;persist();setD();menu()});
  document.getElementById("ins").onclick=()=>dp?dp.prompt():alert(T.ios);
+ document.getElementById("hm").onclick=toMain;document.getElementById("up").onclick=upd;
 }
 function levels(){
- $.innerHTML=`<div class="top"><button class="btn s" id="h">↩</button><span class="stat">${T.lv}</span></div><div class="lv" id="lv"></div>`;
- document.getElementById("h").onclick=menu;
+ tok++;
+ $.innerHTML=`<div class="top"><button class="btn s" id="h" aria-label="${T.bk}">↩</button><button class="btn s" id="hm" aria-label="${T.mainL}">🏠</button><span class="stat">${T.lv}</span></div><div class="lv" id="lv"></div>`;
+ document.getElementById("h").onclick=menu;document.getElementById("hm").onclick=toMain;
  LV.forEach((n,i)=>{const s=save[key("m"+i)]||0;const b=document.createElement("button");b.innerHTML=`${i+1}<small>${"⭐".repeat(s)||"—"}</small>`;b.onclick=()=>memory(i);document.getElementById("lv").appendChild(b)});
 }
 function memory(i){
+ const my=++tok;
  const n=LV[i],pick=shuffle(D).slice(0,n);
  let cards=[];pick.forEach(p=>{cards.push({k:p[0],t:"l",p});cards.push({k:p[0],t:"i",p})});cards=shuffle(cards);
  let open=[],moves=0,found=0,lock=false;
- $.innerHTML=`<div class="top"><button class="btn s" id="h">↩</button><span class="stat" id="mv">${T.mv}: 0</span></div><div class="bar"><i id="pr" style="width:0"></i></div><div class="grid" id="g"></div>`;
- document.getElementById("h").onclick=levels;
+ $.innerHTML=`<div class="top"><button class="btn s" id="h" aria-label="${T.bk}">↩</button><button class="btn s" id="hm" aria-label="${T.mainL}">🏠</button><span class="stat" id="mv">${T.mv}: 0</span><button class="btn s" id="rs" aria-label="${T.rst}">🔄</button></div><div class="bar"><i id="pr" style="width:0"></i></div><div class="grid" id="g"></div>`;
+ document.getElementById("h").onclick=levels;document.getElementById("hm").onclick=toMain;document.getElementById("rs").onclick=()=>memory(i);
  const g=document.getElementById("g");
  cards.forEach(c=>{const el=document.createElement("button");el.className="card";
   el.innerHTML=`<div class="in"><div class="face front">🌴</div><div class="face back${c.t==="i"&&c.p[2].length>3?" sm":""}">${c.t==="l"?c.p[0]:c.p[2]}<small>${c.t==="l"?"":c.p[1]}</small></div></div>`;
   el.onclick=()=>{if(lock||el.classList.contains("f"))return;el.classList.add("f");tone(440,.08);open.push([c,el]);
    if(open.length===2){moves++;document.getElementById("mv").textContent=T.mv+": "+moves;lock=true;
     const[[a,ea],[b,eb]]=open;open=[];
-    if(a.k===b.k){setTimeout(()=>{ea.classList.add("ok");eb.classList.add("ok");good();say(a.p[0]+" … "+a.p[1]);found++;document.getElementById("pr").style.width=found/n*100+"%";lock=false;if(found===n)setTimeout(()=>win(i,moves),900)},400)}
-    else setTimeout(()=>{ea.classList.remove("f");eb.classList.remove("f");lock=false},800)}};
+    if(a.k===b.k){setTimeout(()=>{if(my!==tok)return;ea.classList.add("ok");eb.classList.add("ok");good();say(a.p[0]+" … "+a.p[1]);found++;document.getElementById("pr").style.width=found/n*100+"%";lock=false;if(found===n)setTimeout(()=>{if(my===tok)win(i,moves)},900)},400)}
+    else setTimeout(()=>{if(my!==tok)return;ea.classList.remove("f");eb.classList.remove("f");lock=false},800)}};
   g.appendChild(el)});
 }
 function win(i,moves){
  const n=LV[i],s=moves<=n+2?3:moves<=n*2?2:1;
  save[key("m"+i)]=Math.max(save[key("m"+i)]||0,s);persist();good();
  $.innerHTML=`<div class="win"><h1>🎉 ${T.gr}</h1><div class="stars">${"⭐".repeat(s)}</div><p class="sub">${T.done.replace("{n}",moves)}</p>
- <button class="btn g" id="nx">${i<LV.length-1?T.nx:T.again}</button><button class="btn p" id="lv">${T.menu}</button></div>`;
- document.getElementById("nx").onclick=()=>memory(i<LV.length-1?i+1:0);document.getElementById("lv").onclick=levels;
+ <button class="btn g" id="nx">${i<LV.length-1?T.nx:T.again}</button><button class="btn p" id="lv">${T.menu}</button><button class="btn s" id="hm" aria-label="${T.mainL}">🏠 ${T.main}</button></div>`;
+ document.getElementById("nx").onclick=()=>memory(i<LV.length-1?i+1:0);document.getElementById("lv").onclick=levels;document.getElementById("hm").onclick=toMain;
 }
 function quiz(){
+ const my=++tok;
  const qs=shuffle(D).slice(0,10);let k=0,sc=0;
  function show(){
   if(k>=qs.length){const s=sc>=9?3:sc>=6?2:1;save[key("quiz")]=Math.max(save[key("quiz")]||0,s);persist();
-   $.innerHTML=`<div class="win"><h1>🏆 ${T.res} ${sc}/10</h1><div class="stars">${"⭐".repeat(s)}</div><button class="btn g" id="a">${T.pl}</button><button class="btn p" id="b">${T.menu}</button></div>`;
-   document.getElementById("a").onclick=quiz;document.getElementById("b").onclick=menu;return}
+   $.innerHTML=`<div class="win"><h1>🏆 ${T.res} ${sc}/10</h1><div class="stars">${"⭐".repeat(s)}</div><button class="btn g" id="a">${T.pl}</button><button class="btn p" id="b">${T.menu}</button><button class="btn s" id="hm" aria-label="${T.mainL}">🏠 ${T.main}</button></div>`;
+   document.getElementById("a").onclick=quiz;document.getElementById("b").onclick=menu;document.getElementById("hm").onclick=toMain;return}
   const q=qs[k],ch=shuffle([q,...shuffle(D.filter(d=>d!==q)).slice(0,2)]);
-  $.innerHTML=`<div class="top"><button class="btn s" id="h">↩</button><span class="stat">${k+1}/10</span></div><div class="bar"><i style="width:${k*10}%"></i></div>
+  $.innerHTML=`<div class="top"><button class="btn s" id="h" aria-label="${T.bk}">↩</button><button class="btn s" id="hm" aria-label="${T.mainL}">🏠</button><span class="stat">${k+1}/10</span><button class="btn s" id="rs" aria-label="${T.rst}">🔄</button></div><div class="bar"><i style="width:${k*10}%"></i></div>
   <div class="q${save.pack==="n"?" nq":""}" id="q">${q[2]}</div><p class="sub">${save.pack==="n"?T.cn:T.st.replace("{w}",q[1])}</p><div class="opts" id="o"></div>`;
-  document.getElementById("h").onclick=menu;document.getElementById("q").onclick=()=>say(q[1]);if(save.pack!=="n")say(q[1]);
+  document.getElementById("h").onclick=menu;document.getElementById("hm").onclick=toMain;document.getElementById("rs").onclick=quiz;document.getElementById("q").onclick=()=>say(q[1]);if(save.pack!=="n")say(q[1]);
   ch.forEach(c=>{const b=document.createElement("button");b.className="opt";b.textContent=c[0];
    b.onclick=()=>{document.querySelectorAll(".opt").forEach(x=>x.onclick=null);
     if(c===q){b.classList.add("good");sc++;good()}else{b.classList.add("bad");bad();[...document.querySelectorAll(".opt")].find(x=>x.textContent===q[0]).classList.add("good")}
-    setTimeout(()=>{k++;show()},1100)};
+    setTimeout(()=>{if(my===tok){k++;show()}},1100)};
    document.getElementById("o").appendChild(b)});
  }
  show();
